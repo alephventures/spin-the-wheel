@@ -27,36 +27,44 @@
     // === CONFIGURATION MANAGEMENT ===
     const DEFAULT_CONFIG = {
       topics: [
-        { display: "Healthcare", description: "Medical records, patient care, diagnostics" },
-        { display: "Education", description: "Learning platforms, curriculum, student engagement" },
-        { display: "Finance", description: "Banking, investments, budgeting, transactions" },
-        { display: "Sustainability", description: "Climate, recycling, energy efficiency" },
-        { display: "Entertainment", description: "Games, movies, music, social media" },
-        { display: "Travel", description: "Tourism, transportation, hospitality" },
-        { display: "Food & Dining", description: "Restaurants, recipes, nutrition, delivery" },
-        { display: "Fitness", description: "Workouts, health tracking, wellness" },
+        { display: "Strong Talent Survey", description: "Survey results showing where strong Designers, Engineers, and Product teams are located across companies" },
+        { display: "Relationship Signals", description: "7,686 relationship signals between people with familiarity feedback (familiar vs not familiar)" },
+        { display: "Email Corpus", description: "134K email messages logged to Salesforce, separable by author for analysis" },
+        { display: "Event Attendees", description: "Attendee lists from various events including partner meetings and 'Friends of Aleph' gatherings" },
+//        { display: "Pitch Decks", description: "Collection of pitch decks from portfolio companies and prospects" },
+        { display: "Board Decks", description: "Board presentation decks from portfolio companies" },
+        { display: "Financial Reports", description: "Financial reports and budgets from all portfolio companies" },
+        { display: "Karma Recommendations", description: "Data from Talpod's Karma system with recommended people, who recommended them, and work history" },
+        { display: "LinkedIn Followers", description: "Complete list of all Aleph's LinkedIn followers" },
+        { display: "Newsletter Subscribers", description: "All newsletter subscribers plus Invested and Almost Human podcast subscribers" },
+//        { display: "Profile Pictures", description: "Around 4M profile pictures sourced from LinkedIn" },
+//        { display: "Video Footage", description: "Video footage of partners and team members for avatar creation" },
+        { display: "Company Registry", description: "Partial info from Israeli company registry with names, addresses, directors, and shareholders" },
+        { display: "Seed Investors Database", description: "Partial list of seed investors and their recent investments with deal history" },
+        { display: "Tamnuni Outreach Data", description: "Tamnuni labeled data for outreach effectiveness and response patterns, includes for each pair of people - do they know each other, whether they're willing to reach out and whether they recommend" },
       ],
       techs: [
-        { display: "Computer Vision", description: "Image recognition, object detection, visual AI" },
-        { display: "Voice AI", description: "Speech recognition, voice synthesis, audio processing" },
-        { display: "Large Language Models", description: "Text generation, understanding, reasoning" },
-        { display: "Robotics", description: "Physical automation, sensors, actuators" },
-        { display: "AR/VR", description: "Augmented and virtual reality, spatial computing" },
-        { display: "Blockchain", description: "Distributed ledgers, smart contracts, crypto" },
-        { display: "IoT Sensors", description: "Connected devices, real-time data, edge computing" },
-        { display: "Biometrics", description: "Fingerprints, face recognition, behavioral analysis" },
+        { display: "Zapier", description: "Connect 5,000+ apps without code. Build multi-step workflows with conditional logic for automated pipelines" },
+        { display: "n8n", description: "Self-hosted automation with 400+ integrations. Visual workflow builder for complex data pipelines" },
+        { display: "Slack Bot", description: "Build conversational interfaces in Slack using OpenAI/Claude APIs for natural language data queries" },
+        { display: "Chrome Extension", description: "Browser extension that augments web pages with additional context and data overlays" },
+        { display: "Google Sheets + AppSheet", description: "Familiar spreadsheet interface with no-code app building on top" },
+        { display: "Notion API", description: "Build custom integrations with Notion databases and pages for knowledge management" },
+        { display: "Msty", description: "Privacy-first AI platform that runs locally on desktop. Multi-model support with visual workflow builder, no cloud required" },
+        { display: "Langfuse", description: "Open-source LLM engineering platform for debugging, evaluating, and monitoring AI applications with traces and metrics" },
+        { display: "ElevenLabs Voice API", description: "Text-to-speech and voice cloning for audio-based interfaces" },
       ],
       constraints: [
-        { display: "Must work underwater", description: "Fully submersible and waterproof operation" },
         { display: "Only uses emojis for UI", description: "No text interface, emoji-only communication" },
-        { display: "Powered by dance moves", description: "Motion-activated through choreography" },
-        { display: "Works in complete darkness", description: "No visual components, audio/touch only" },
-        { display: "Built for cats", description: "Designed specifically for feline users" },
-        { display: "Runs on a smartwatch", description: "Tiny screen, limited resources" },
-        { display: "No screens allowed", description: "Audio-only or physical output" },
-        { display: "Must be edible", description: "Consumable components and interface" },
+        { display: "Voice-only interface", description: "No screens allowed, audio-only interaction and feedback" },
+        { display: "Explain to grandma", description: "Ultra-simple language, no jargon or technical terms whatsoever" },
+        { display: "Passive-aggressive personality", description: "All messages are subtly snarky, judgmental, and condescending" },
+        { display: "Overly enthusiastic", description: "Everything gets multiple exclamation marks and celebrates tiny wins!!!" },
+        { display: "Speaks only in questions", description: "Every single response must be phrased as a question?" },
+        { display: "Roast Me Gently", description: "The app must politely insult the user at every step" },
+        { display: "Confetti Tax", description: "Every successful action triggers confetti, celebration sounds, or silly rewards" },
       ],
-      context: "This is for the Aleph 'Almost Human' Hackathon. Keep ideas cutting-edge but achievable in 24-48 hours. Focus on creative combinations that wow judges.",
+      context: "This is the Aleph 'Almost Human' Hackathon. Aleph is an $860M early-stage VC fund building the future of Israeli tech. We're looking for ideas that celebrate AI augmenting human potential—tools that help VCs serve founders better, or help founders build faster. Think: connecting portfolio companies through Ampliphy's network intelligence, discovering hidden talent in unconventional places, turning investment data into storytelling gold, automating serendipity in fundraising, or building community at scale. Keep it achievable in 24-48 hours and demo-ready. The best ideas have soul: they solve real problems with a touch of magic.",
       apiKey: "YOUR_OPENAI_API_KEY"
     };
 
@@ -622,7 +630,7 @@ Make it fun, energetic, and demo-ready.`;
       const handleImport = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        
+
         const reader = new FileReader();
         reader.onload = (event) => {
           try {
@@ -640,6 +648,21 @@ Make it fun, energetic, and demo-ready.`;
           }
         };
         reader.readAsText(file);
+      };
+
+      const handleResetToDefault = () => {
+        if (confirm('Are you sure you want to reset to default configuration? This will clear all customizations.')) {
+          localStorage.removeItem('hackathon-wheel-config');
+          setEditConfig({
+            topics: DEFAULT_CONFIG.topics.map(t => `${t.display} | ${t.description}`).join('\n'),
+            techs: DEFAULT_CONFIG.techs.map(t => `${t.display} | ${t.description}`).join('\n'),
+            constraints: DEFAULT_CONFIG.constraints.map(t => `${t.display} | ${t.description}`).join('\n'),
+            context: DEFAULT_CONFIG.context,
+            apiKey: DEFAULT_CONFIG.apiKey
+          });
+          setErrors({});
+          alert('Configuration reset to defaults. Click "Save Configuration" to apply.');
+        }
       };
 
       return (
@@ -836,6 +859,21 @@ Make it fun, energetic, and demo-ready.`;
                 📤 Import JSON
                 <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
               </label>
+              <button
+                onClick={handleResetToDefault}
+                style={{
+                  padding: '15px 40px',
+                  background: 'rgba(255, 107, 107, 0.2)',
+                  border: '1px solid rgba(255, 107, 107, 0.5)',
+                  borderRadius: '12px',
+                  color: '#ff6b6b',
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  cursor: 'pointer'
+                }}
+              >
+                🔄 Reset to Default
+              </button>
             </div>
           </div>
         </div>
