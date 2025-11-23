@@ -31,6 +31,7 @@
         { display: "Relationship Signals", description: "7,686 relationship signals between people with familiarity feedback (familiar vs not familiar)" },
         { display: "Email Corpus", description: "134K email messages logged to Salesforce, separable by author for analysis" },
         { display: "Event Attendees", description: "Attendee lists from various events including partner meetings and 'Friends of Aleph' gatherings" },
+        { display: "Event Organization", description: "Organizing events is hard - curating attendees, sending invites, tracking RSVPs, managing logistics" },
 //        { display: "Pitch Decks", description: "Collection of pitch decks from portfolio companies and prospects" },
         { display: "Board Decks", description: "Board presentation decks from portfolio companies" },
         { display: "Financial Reports", description: "Financial reports and budgets from all portfolio companies" },
@@ -50,6 +51,7 @@
         { display: "Chrome Extension", description: "Browser extension that augments web pages with additional context and data overlays" },
         { display: "Google Sheets + AppSheet", description: "Familiar spreadsheet interface with no-code app building on top" },
         { display: "Notion API", description: "Build custom integrations with Notion databases and pages for knowledge management" },
+        { display: "Google AI Studio", description: "Free platform for prototyping with Gemini AI models. Low-code interface with multimodal capabilities and real-time streaming" },
         { display: "Msty", description: "Privacy-first AI platform that runs locally on desktop. Multi-model support with visual workflow builder, no cloud required" },
         { display: "Langfuse", description: "Open-source LLM engineering platform for debugging, evaluating, and monitoring AI applications with traces and metrics" },
         { display: "ElevenLabs Voice API", description: "Text-to-speech and voice cloning for audio-based interfaces" },
@@ -180,17 +182,33 @@
           </div>
           {selectedIndex !== null && !isSpinning && (
             <div style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: '#ffffff',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              padding: '15px 30px',
-              borderRadius: '12px',
-              boxShadow: '0 0 30px rgba(102, 126, 234, 0.5)',
-              textAlign: 'center',
-              minWidth: '200px'
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '10px'
             }}>
-              {items[selectedIndex]?.display}
+              <div style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: '#ffffff',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                padding: '15px 30px',
+                borderRadius: '12px',
+                boxShadow: '0 0 30px rgba(102, 126, 234, 0.5)',
+                textAlign: 'center',
+                minWidth: '200px'
+              }}>
+                {items[selectedIndex]?.display}
+              </div>
+              <div style={{
+                fontSize: '14px',
+                color: '#b0b8cc',
+                textAlign: 'center',
+                maxWidth: '250px',
+                fontStyle: 'italic'
+              }}>
+                {items[selectedIndex]?.description}
+              </div>
             </div>
           )}
         </div>
