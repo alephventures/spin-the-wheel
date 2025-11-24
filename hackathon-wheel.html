@@ -99,9 +99,10 @@
       useEffect(() => {
         if (isSpinning && !isAnimating) {
           setIsAnimating(true);
-          const finalRotation = 360 * 5 + (selectedIndex * (360 / items.length));
+          const sliceAngle = 360 / items.length;
+          const finalRotation = 360 * 5 + (selectedIndex * sliceAngle) + (sliceAngle / 2);
           setRotation(finalRotation);
-          
+
           setTimeout(() => {
             setIsAnimating(false);
             onComplete();
