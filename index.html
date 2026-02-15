@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Almost Human Hackathon Wheel</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // === CONFIGURATION MANAGEMENT ===
+    const DEFAULT_CONFIG = {
+      topics: [
+        { display: "Strong Talent Survey", description: "Survey results showing where strong Designers, Engineers, and Product teams are located across companies" },
+        { display: "Relationship Signals", description: "7,686 relationship signals between people with familiarity feedback (familiar vs not familiar)" },
+        { display: "Email Corpus", description: "134K email messages logged to Salesforce, separable by author for analysis" },
+        { display: "Event Attendees", description: "Attendee lists from various events including partner meetings and 'Friends of Aleph' gatherings" },
+        { display: "Event Organization", description: "Organizing events is hard - curating attendees, sending invites, tracking RSVPs, managing logistics" },
+//        { display: "Pitch Decks", description: "Collection of pitch decks from portfolio companies and prospects" },
+        { display: "Board Decks", description: "Board presentation decks from portfolio companies" },
+        { display: "Financial Reports", description: "Financial reports and budgets from all portfolio companies" },
+        { display: "Karma Recommendations", description: "Data from Talpod's Karma system with recommended people, who recommended them, and work history" },
+        { display: "LinkedIn Followers", description: "Complete list of all Aleph's LinkedIn followers" },
+        { display: "Newsletter Subscribers", description: "All newsletter subscribers plus Invested and Almost Human podcast subscribers" },
+//        { display: "Profile Pictures", description: "Around 4M profile pictures sourced from LinkedIn" },
+//        { display: "Video Footage", description: "Video footage of partners and team members for avatar creation" },
+        { display: "Company Registry", description: "Partial info from Israeli company registry with names, addresses, directors, and shareholders" },
+        { display: "Seed Investors Database", description: "Partial list of seed investors and their recent investments with deal history" },
+        { display: "Tamnuni Outreach Data", description: "Tamnuni labeled data for outreach effectiveness and response patterns, includes for each pair of people - do they know each other, whether they're willing to reach out and whether they recommend" },
+      ],
+      techs: [
+        { display: "Zapier", description: "Connect 5,000+ apps without code. Build multi-step workflows with conditional logic for automated pipelines" },
+        { display: "n8n", description: "Self-hosted automation with 400+ integrations. Visual workflow builder for complex data pipelines" },
+        { display: "Slack Bot", description: "Build conversational interfaces in Slack using OpenAI/Claude APIs for natural language data queries" },
+        { display: "Chrome Extension", description: "Browser extension that augments web pages with additional context and data overlays" },
+        { display: "Google Sheets + AppSheet", description: "Familiar spreadsheet interface with no-code app building on top" },
+        { display: "Notion API", description: "Build custom integrations with Notion databases and pages for knowledge management" },
+        { display: "Google AI Studio", description: "Free platform for prototyping with Gemini AI models. Low-code interface with multimodal capabilities and real-time streaming" },
+        { display: "Msty", description: "Privacy-first AI platform that runs locally on desktop. Multi-model support with visual workflow builder, no cloud required" },
+        { display: "Langfuse", description: "Open-source LLM engineering platform for debugging, evaluating, and monitoring AI applications with traces and metrics" },
+        { display: "ElevenLabs Voice API", description: "Text-to-speech and voice cloning for audio-based interfaces" },
+      ],
+      constraints: [
+        { display: "Only uses emojis for UI", description: "No text interface, emoji-only communication" },
+        { display: "Voice-only interface", description: "No screens allowed, audio-only interaction and feedback" },
+        { display: "Explain to grandma", description: "Ultra-simple language, no jargon or technical terms whatsoever" },
+        { display: "Passive-aggressive personality", description: "All messages are subtly snarky, judgmental, and condescending" },
+        { display: "Overly enthusiastic", description: "Everything gets multiple exclamation marks and celebrates tiny wins!!!" },
+        { display: "Speaks only in questions", description: "Every single response must be phrased as a question?" },
+        { display: "Roast Me Gently", description: "The app must politely insult the user at every step" },
+        { display: "Confetti Tax", description: "Every successful action triggers confetti, celebration sounds, or silly rewards" },
+      ],
+      context: "This is the Aleph 'Almost Human' Hackathon. Aleph is an $860M early-stage VC fund building the future of Israeli tech. We're looking for ideas that celebrate AI augmenting human potential—tools that help VCs serve founders better, or help founders build faster. Think: connecting portfolio companies through Ampliphy's network intelligence, discovering hidden talent in unconventional places, turning investment data into storytelling gold, automating serendipity in fundraising, or building community at scale. Keep it achievable in 24-48 hours and demo-ready. The best ideas have soul: they solve real problems with a touch of magic.",
+      apiKey: ""
+    };
+
+    const loadConfig = () => {
+      try {
+        const saved = localStorage.getItem('hackathon-wheel-config');
+        if (saved) {
+          return JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error('Failed to load config:', e);
+      }
+      return DEFAULT_CONFIG;
+    };
+
+    const saveConfig = (config) => {
+      try {
+        localStorage.setItem('hackathon-wheel-config', JSON.stringify(config));
+      } catch (e) {
+        console.error('Failed to save config:', e);
+      }
+    };
+
+    // === WHEEL COMPONENT ===
+    const Wheel = ({ items, isSpinning, selectedIndex, onComplete, label }) => {
+      const [rotation, setRotation] = useState(0);
+      const [isAnimating, setIsAnimating] = useState(false);
+      const canvasRef = useRef(null);
+
+      useEffect(() => {
+        if (isSpinning && !isAnimating) {
+          setIsAnimating(true);
+          const sliceAngle = 360 / items.length;
+          const finalRotation = 360 * 5 + (selectedIndex * sliceAngle) + (sliceAngle / 2);
+          setRotation(finalRotation);
+
+          setTimeout(() => {
+            setIsAnimating(false);
+            onComplete();
+          }, 3000);
+        }
+      }, [isSpinning, selectedIndex, items.length, onComplete, isAnimating]);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = Math.min(centerX, centerY) - 10;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const sliceAngle = (2 * Math.PI) / items.length;
+        
+        items.forEach((item, i) => {
+          const startAngle = i * sliceAngle - Math.PI / 2;
+          const endAngle = startAngle + sliceAngle;
+          
+          ctx.beginPath();
+          ctx.moveTo(centerX, centerY);
+          ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+          ctx.closePath();
+          
+          const hue = (i * 360 / items.length) % 360;
+          ctx.fillStyle = `hsl(${hue}, 70%, 45%)`;
+          ctx.fill();
+          ctx.strokeStyle = '#0a0e27';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          
+          ctx.save();
+          ctx.translate(centerX, centerY);
+          ctx.rotate(startAngle + sliceAngle / 2);
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 14px sans-serif';
+          ctx.fillText(item.display, radius * 0.65, 5);
+          ctx.restore();
+        });
+        
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
+        ctx.fillStyle = '#0a0e27';
+        ctx.fill();
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - radius - 5);
+        ctx.lineTo(centerX - 10, centerY - radius - 20);
+        ctx.lineTo(centerX + 10, centerY - radius - 20);
+        ctx.closePath();
+        ctx.fillStyle = '#ff00ff';
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }, [items]);
+
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+          <div style={{ fontSize: '18px', fontWeight: '600', color: '#00ff88', textTransform: 'uppercase', letterSpacing: '2px' }}>
+            {label}
+          </div>
+          <div style={{
+            transform: `rotate(${rotation}deg)`,
+            transition: isAnimating ? 'transform 3s cubic-bezier(0.17, 0.67, 0.35, 0.96)' : 'none',
+            filter: 'drop-shadow(0 0 20px rgba(0, 255, 136, 0.3))'
+          }}>
+            <canvas ref={canvasRef} width={300} height={300} />
+          </div>
+          {selectedIndex !== null && !isSpinning && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <div style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: '#ffffff',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                padding: '15px 30px',
+                borderRadius: '12px',
+                boxShadow: '0 0 30px rgba(102, 126, 234, 0.5)',
+                textAlign: 'center',
+                minWidth: '200px'
+              }}>
+                {items[selectedIndex]?.display}
+              </div>
+              <div style={{
+                fontSize: '14px',
+                color: '#b0b8cc',
+                textAlign: 'center',
+                maxWidth: '250px',
+                fontStyle: 'italic'
+              }}>
+                {items[selectedIndex]?.description}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    // === MAIN APP ===
+    function HackathonWheel() {
+      const [config, setConfig] = useState(loadConfig());
+      const [showAdmin, setShowAdmin] = useState(false);
+      const [gameState, setGameState] = useState('idle');
+      const [currentWheel, setCurrentWheel] = useState(0);
+      const [selections, setSelections] = useState({ topic: null, tech: null, constraint: null });
+      const [wheelSpinning, setWheelSpinning] = useState([false, false, false]);
+      const [generatedIdea, setGeneratedIdea] = useState('');
+      const [isGenerating, setIsGenerating] = useState(false);
+      const ideaRef = useRef(null);
+
+      useEffect(() => {
+        saveConfig(config);
+      }, [config]);
+
+      const startSpinning = () => {
+        setGameState('spinning');
+        setCurrentWheel(0);
+        setSelections({ topic: null, tech: null, constraint: null });
+        setGeneratedIdea('');
+        
+        const topicIndex = Math.floor(Math.random() * config.topics.length);
+        setSelections(prev => ({ ...prev, topic: topicIndex }));
+        setWheelSpinning([true, false, false]);
+      };
+
+      const handleWheelComplete = (wheelIndex) => {
+        setWheelSpinning(prev => {
+          const next = [...prev];
+          next[wheelIndex] = false;
+          return next;
+        });
+
+        if (wheelIndex === 0) {
+          setTimeout(() => {
+            const techIndex = Math.floor(Math.random() * config.techs.length);
+            setSelections(prev => ({ ...prev, tech: techIndex }));
+            setWheelSpinning([false, true, false]);
+            setCurrentWheel(1);
+          }, 500);
+        } else if (wheelIndex === 1) {
+          setTimeout(() => {
+            const constraintIndex = Math.floor(Math.random() * config.constraints.length);
+            setSelections(prev => ({ ...prev, constraint: constraintIndex }));
+            setWheelSpinning([false, false, true]);
+            setCurrentWheel(2);
+          }, 500);
+        } else if (wheelIndex === 2) {
+          setTimeout(() => {
+            generateIdea();
+          }, 500);
+        }
+      };
+
+      const generateIdea = async () => {
+        if (!config.apiKey) {
+          alert('Please set your OpenAI API key in the Admin panel');
+          return;
+        }
+
+        setGameState('generating');
+        setIsGenerating(true);
+        setGeneratedIdea('');
+
+        const topic = config.topics[selections.topic];
+        const tech = config.techs[selections.tech];
+        const constraint = config.constraints[selections.constraint];
+
+        const systemPrompt = `You are a creative but concise hackathon ideation assistant.
+Generate short, funny, surprising idea pitches that combine three elements:
+- a Topic 
+- a Technology 
+- a Silly Constraint
+Keep the tone playful but smart.
+Output only the idea text, no formatting instructions.`;
+
+        const userPrompt = `${config.context}
+
+Topic: "${topic.display}"
+Topic Description: "${topic.description}"
+Tech: "${tech.display}"
+Tech Description: "${tech.description}"
+Constraint: "${constraint.display}"
+Constraint Description: "${constraint.description}"
+
+Write ONE short idea (3–6 sentences max) that creatively combines all three elements.
+Make it fun, energetic, and demo-ready.`;
+
+        try {
+          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${config.apiKey}`
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o',
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt }
+              ],
+              stream: true,
+              max_tokens: 300,
+              temperature: 0.9
+            })
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error Response:', errorText);
+            throw new Error(`API error: ${response.status} - ${errorText}`);
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              const trimmedLine = line.trim();
+              if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
+              
+              if (trimmedLine.startsWith('data: ')) {
+                const data = trimmedLine.slice(6);
+                
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices?.[0]?.delta?.content;
+                  if (content) {
+                    setGeneratedIdea(prev => {
+                      const newIdea = prev + content;
+                      setTimeout(() => {
+                        ideaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                      }, 10);
+                      return newIdea;
+                    });
+                  }
+                } catch (e) {
+                  console.warn('Failed to parse SSE data:', data);
+                }
+              }
+            }
+          }
+
+          setIsGenerating(false);
+          setGameState('complete');
+        } catch (error) {
+          console.error('Error generating idea:', error);
+          let errorMessage = '❌ Error generating idea. ';
+          
+          if (error.message.includes('401')) {
+            errorMessage += 'Invalid API key. Please check your OpenAI API key in Admin settings.';
+          } else if (error.message.includes('429')) {
+            errorMessage += 'Rate limit exceeded. Please wait a moment and try again.';
+          } else if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+            errorMessage += 'Network error. This may be a CORS issue. Try: 1) Running through a local server, 2) Using a CORS proxy, or 3) Installing a CORS browser extension.';
+          } else {
+            errorMessage += 'Please check your API key and internet connection. See console for details.';
+          }
+          
+          setGeneratedIdea(errorMessage);
+          setIsGenerating(false);
+          setGameState('complete');
+        }
+      };
+
+      const spinAgain = () => {
+        setGameState('idle');
+        setCurrentWheel(0);
+        setSelections({ topic: null, tech: null, constraint: null });
+        setGeneratedIdea('');
+      };
+
+      if (showAdmin) {
+        return <AdminPanel config={config} setConfig={setConfig} onClose={() => setShowAdmin(false)} />;
+      }
+
+      return (
+        <div style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%)',
+          color: '#ffffff',
+          fontFamily: 'system-ui, sans-serif',
+          padding: '40px 20px',
+          position: 'relative'
+        }}>
+          <button
+            onClick={() => setShowAdmin(true)}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              color: '#ffffff',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600'
+            }}
+          >
+            ⚙️ Admin
+          </button>
+
+          <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+            <h1 style={{
+              fontSize: '64px',
+              fontWeight: '900',
+              background: 'linear-gradient(135deg, #00ff88 0%, #00d4ff 50%, #ff00ff 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginBottom: '10px'
+            }}>
+              Almost Human Hackathon
+            </h1>
+            <p style={{ fontSize: '24px', color: '#b0b8cc', fontWeight: '500' }}>
+              Spin the wheels. Get your idea. Build something amazing.
+            </p>
+          </div>
+
+          {gameState === 'idle' && (
+            <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+              <button
+                onClick={startSpinning}
+                disabled={!config.apiKey}
+                style={{
+                  fontSize: '32px',
+                  fontWeight: '700',
+                  padding: '25px 60px',
+                  background: config.apiKey 
+                    ? 'linear-gradient(135deg, #00ff88 0%, #00d4ff 100%)'
+                    : 'rgba(255, 255, 255, 0.2)',
+                  border: 'none',
+                  borderRadius: '16px',
+                  color: config.apiKey ? '#0a0e27' : '#666',
+                  cursor: config.apiKey ? 'pointer' : 'not-allowed',
+                  boxShadow: config.apiKey ? '0 0 40px rgba(0, 255, 136, 0.6)' : 'none',
+                  transition: 'transform 0.2s',
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px'
+                }}
+                onMouseEnter={(e) => config.apiKey && (e.target.style.transform = 'scale(1.05)')}
+                onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+              >
+                🎯 Start Spinning
+              </button>
+              {!config.apiKey && (
+                <p style={{ marginTop: '20px', color: '#ff6b6b' }}>
+                  ⚠️ Please set your OpenAI API key in Admin settings
+                </p>
+              )}
+            </div>
+          )}
+
+          {gameState !== 'idle' && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '40px',
+              marginBottom: '50px',
+              flexWrap: 'wrap'
+            }}>
+              <Wheel
+                items={config.topics}
+                isSpinning={wheelSpinning[0]}
+                selectedIndex={selections.topic}
+                onComplete={() => handleWheelComplete(0)}
+                label="Topic"
+              />
+              <Wheel
+                items={config.techs}
+                isSpinning={wheelSpinning[1]}
+                selectedIndex={selections.tech}
+                onComplete={() => handleWheelComplete(1)}
+                label="Technology"
+              />
+              <Wheel
+                items={config.constraints}
+                isSpinning={wheelSpinning[2]}
+                selectedIndex={selections.constraint}
+                onComplete={() => handleWheelComplete(2)}
+                label="Constraint"
+              />
+            </div>
+          )}
+
+          {(gameState === 'generating' || gameState === 'complete') && (
+            <div ref={ideaRef} style={{
+              maxWidth: '900px',
+              margin: '0 auto',
+              padding: '40px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '2px solid rgba(0, 255, 136, 0.3)',
+              borderRadius: '20px',
+              boxShadow: '0 0 40px rgba(0, 255, 136, 0.2)'
+            }}>
+              <h2 style={{
+                fontSize: '32px',
+                fontWeight: '700',
+                marginBottom: '20px',
+                color: '#00ff88'
+              }}>
+                💡 Your Hackathon Idea
+              </h2>
+              <p style={{
+                fontSize: '22px',
+                lineHeight: '1.6',
+                color: '#ffffff',
+                minHeight: '100px'
+              }}>
+                {generatedIdea}
+                {isGenerating && <span style={{ opacity: 0.5 }}>▊</span>}
+              </p>
+
+              {gameState === 'complete' && (
+                <div style={{ marginTop: '30px', display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={generateIdea}
+                    style={{
+                      fontSize: '20px',
+                      fontWeight: '600',
+                      padding: '15px 40px',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      color: '#ffffff',
+                      cursor: 'pointer',
+                      boxShadow: '0 0 20px rgba(102, 126, 234, 0.4)',
+                      transition: 'transform 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
+                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                  >
+                    🔄 Regenerate Idea
+                  </button>
+                  <button
+                    onClick={spinAgain}
+                    style={{
+                      fontSize: '20px',
+                      fontWeight: '600',
+                      padding: '15px 40px',
+                      background: 'linear-gradient(135deg, #00ff88 0%, #00d4ff 100%)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      color: '#0a0e27',
+                      cursor: 'pointer',
+                      boxShadow: '0 0 20px rgba(0, 255, 136, 0.4)',
+                      transition: 'transform 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
+                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                  >
+                    🎲 Spin Again
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // === ADMIN PANEL COMPONENT ===
+    function AdminPanel({ config, setConfig, onClose }) {
+      const [editConfig, setEditConfig] = useState({
+        topics: config.topics.map(t => `${t.display} | ${t.description}`).join('\n'),
+        techs: config.techs.map(t => `${t.display} | ${t.description}`).join('\n'),
+        constraints: config.constraints.map(t => `${t.display} | ${t.description}`).join('\n'),
+        context: config.context,
+        apiKey: config.apiKey
+      });
+      const [errors, setErrors] = useState({});
+
+      const parseItems = (text) => {
+        return text.split('\n')
+          .filter(line => line.trim())
+          .map(line => {
+            const parts = line.split('|').map(p => p.trim());
+            if (parts.length < 2) return null;
+            return { display: parts[0], description: parts[1] };
+          })
+          .filter(item => item !== null);
+      };
+
+      const handleSave = () => {
+        const newErrors = {};
+        
+        const topics = parseItems(editConfig.topics);
+        const techs = parseItems(editConfig.techs);
+        const constraints = parseItems(editConfig.constraints);
+        
+        if (topics.length === 0) newErrors.topics = 'At least one topic required';
+        if (techs.length === 0) newErrors.techs = 'At least one tech required';
+        if (constraints.length === 0) newErrors.constraints = 'At least one constraint required';
+        
+        if (Object.keys(newErrors).length > 0) {
+          setErrors(newErrors);
+          return;
+        }
+
+        setConfig({
+          topics,
+          techs,
+          constraints,
+          context: editConfig.context,
+          apiKey: editConfig.apiKey
+        });
+        onClose();
+      };
+
+      const handleExport = () => {
+        const dataStr = JSON.stringify(config, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'hackathon-wheel-config.json';
+        link.click();
+        URL.revokeObjectURL(url);
+      };
+
+      const handleImport = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const imported = JSON.parse(event.target.result);
+            setEditConfig({
+              topics: imported.topics.map(t => `${t.display} | ${t.description}`).join('\n'),
+              techs: imported.techs.map(t => `${t.display} | ${t.description}`).join('\n'),
+              constraints: imported.constraints.map(t => `${t.display} | ${t.description}`).join('\n'),
+              context: imported.context || '',
+              apiKey: imported.apiKey || ''
+            });
+            setErrors({});
+          } catch (error) {
+            alert('Failed to import: Invalid JSON file');
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      const handleResetToDefault = () => {
+        if (confirm('Are you sure you want to reset to default configuration? This will clear all customizations.')) {
+          localStorage.removeItem('hackathon-wheel-config');
+          setEditConfig({
+            topics: DEFAULT_CONFIG.topics.map(t => `${t.display} | ${t.description}`).join('\n'),
+            techs: DEFAULT_CONFIG.techs.map(t => `${t.display} | ${t.description}`).join('\n'),
+            constraints: DEFAULT_CONFIG.constraints.map(t => `${t.display} | ${t.description}`).join('\n'),
+            context: DEFAULT_CONFIG.context,
+            apiKey: DEFAULT_CONFIG.apiKey
+          });
+          setErrors({});
+          alert('Configuration reset to defaults. Click "Save Configuration" to apply.');
+        }
+      };
+
+      return (
+        <div style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%)',
+          color: '#ffffff',
+          fontFamily: 'system-ui, sans-serif',
+          padding: '40px 20px'
+        }}>
+          <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+              <h1 style={{ fontSize: '42px', fontWeight: '700' }}>⚙️ Admin Configuration</h1>
+              <button
+                onClick={onClose}
+                style={{
+                  padding: '10px 20px',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                  fontSize: '16px'
+                }}
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '30px' }}>
+              <label style={{ display: 'block', marginBottom: '10px', fontSize: '18px', fontWeight: '600', color: '#00ff88' }}>
+                OpenAI API Key
+              </label>
+              <input
+                type="password"
+                value={editConfig.apiKey}
+                onChange={(e) => setEditConfig({ ...editConfig, apiKey: e.target.value })}
+                placeholder="sk-..."
+                style={{
+                  width: '100%',
+                  padding: '15px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: '#ffffff',
+                  fontSize: '16px',
+                  fontFamily: 'monospace'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '30px' }}>
+              <label style={{ display: 'block', marginBottom: '10px', fontSize: '18px', fontWeight: '600', color: '#00ff88' }}>
+                Context Prompt
+              </label>
+              <textarea
+                value={editConfig.context}
+                onChange={(e) => setEditConfig({ ...editConfig, context: e.target.value })}
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '15px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: '#ffffff',
+                  fontSize: '16px',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '30px' }}>
+              <label style={{ display: 'block', marginBottom: '10px', fontSize: '18px', fontWeight: '600', color: '#00d4ff' }}>
+                Topics
+              </label>
+              <p style={{ fontSize: '14px', color: '#b0b8cc', marginBottom: '10px' }}>
+                Format: Display Text | Description Text (one per line)
+              </p>
+              <textarea
+                value={editConfig.topics}
+                onChange={(e) => setEditConfig({ ...editConfig, topics: e.target.value })}
+                rows={8}
+                style={{
+                  width: '100%',
+                  padding: '15px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: errors.topics ? '1px solid #ff6b6b' : '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  fontFamily: 'monospace',
+                  resize: 'vertical'
+                }}
+              />
+              {errors.topics && <p style={{ color: '#ff6b6b', marginTop: '5px' }}>{errors.topics}</p>}
+            </div>
+
+            <div style={{ marginBottom: '30px' }}>
+              <label style={{ display: 'block', marginBottom: '10px', fontSize: '18px', fontWeight: '600', color: '#00d4ff' }}>
+                Technologies
+              </label>
+              <p style={{ fontSize: '14px', color: '#b0b8cc', marginBottom: '10px' }}>
+                Format: Display Text | Description Text (one per line)
+              </p>
+              <textarea
+                value={editConfig.techs}
+                onChange={(e) => setEditConfig({ ...editConfig, techs: e.target.value })}
+                rows={8}
+                style={{
+                  width: '100%',
+                  padding: '15px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: errors.techs ? '1px solid #ff6b6b' : '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  fontFamily: 'monospace',
+                  resize: 'vertical'
+                }}
+              />
+              {errors.techs && <p style={{ color: '#ff6b6b', marginTop: '5px' }}>{errors.techs}</p>}
+            </div>
+
+            <div style={{ marginBottom: '30px' }}>
+              <label style={{ display: 'block', marginBottom: '10px', fontSize: '18px', fontWeight: '600', color: '#00d4ff' }}>
+                Silly Constraints
+              </label>
+              <p style={{ fontSize: '14px', color: '#b0b8cc', marginBottom: '10px' }}>
+                Format: Display Text | Description Text (one per line)
+              </p>
+              <textarea
+                value={editConfig.constraints}
+                onChange={(e) => setEditConfig({ ...editConfig, constraints: e.target.value })}
+                rows={8}
+                style={{
+                  width: '100%',
+                  padding: '15px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: errors.constraints ? '1px solid #ff6b6b' : '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  fontFamily: 'monospace',
+                  resize: 'vertical'
+                }}
+              />
+              {errors.constraints && <p style={{ color: '#ff6b6b', marginTop: '5px' }}>{errors.constraints}</p>}
+            </div>
+
+            <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '40px', flexWrap: 'wrap' }}>
+              <button
+                onClick={handleSave}
+                style={{
+                  padding: '15px 40px',
+                  background: 'linear-gradient(135deg, #00ff88 0%, #00d4ff 100%)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  color: '#0a0e27',
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  boxShadow: '0 0 20px rgba(0, 255, 136, 0.4)'
+                }}
+              >
+                💾 Save Configuration
+              </button>
+              <button
+                onClick={handleExport}
+                style={{
+                  padding: '15px 40px',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '12px',
+                  color: '#ffffff',
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  cursor: 'pointer'
+                }}
+              >
+                📥 Export JSON
+              </button>
+              <label style={{
+                padding: '15px 40px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '12px',
+                color: '#ffffff',
+                fontSize: '18px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'inline-block'
+              }}>
+                📤 Import JSON
+                <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
+              </label>
+              <button
+                onClick={handleResetToDefault}
+                style={{
+                  padding: '15px 40px',
+                  background: 'rgba(255, 107, 107, 0.2)',
+                  border: '1px solid rgba(255, 107, 107, 0.5)',
+                  borderRadius: '12px',
+                  color: '#ff6b6b',
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  cursor: 'pointer'
+                }}
+              >
+                🔄 Reset to Default
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // === RENDER APP ===
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<HackathonWheel />);
+  </script>
+</body>
+</html>
