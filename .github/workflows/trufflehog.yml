@@ -1,0 +1,27 @@
+# Blocks pull requests that introduce live credentials.
+# Scans only the commits added by the PR (or push) with TruffleHog, verifying each
+# candidate against its provider (read-only); fails on provider-verified secrets.
+name: TruffleHog Secret Scan
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  trufflehog:
+    name: TruffleHog Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan new commits for live secrets
+        uses: trufflesecurity/trufflehog@v3.99.7
+        with:
+          extra_args: --results=verified
